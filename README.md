@@ -1,6 +1,6 @@
 # CakePHP_JWT
 
-CakePHP_JWT is a Plugin for CakePHP that allows you to authenticate users by JSON Web Tokens
+CakePHP_JWT is a Plugin for CakePHP 4 that allows you to authenticate users by JSON Web Tokens
 
 ## Installation
 
