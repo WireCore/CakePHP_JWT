@@ -1,5 +1,5 @@
 {
-    "name": "CakePHP_JWT",
+    "name": "WireCore/CakePHP_JWT",
     "description": "CakePHP plugin for authenticating users by JSON Web Tokens",
     "type": "cakephp-plugin",
     "version": "0.1.0",

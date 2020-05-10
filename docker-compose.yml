@@ -1,0 +1,75 @@
+version: '3'
+
+services:
+    # Mail
+    cakephp-jwt-mailhog:
+        image: phpdockerio/mailhog:latest
+        container_name: cakephp-jwt-mailhog
+        ports:
+            - "8125:8025"
+    # DB
+    cakephp-jwt-mysql:
+        image: mysql:5.7
+        container_name: cakephp-jwt-mysql
+        volumes:
+            - ./db-data/db:/var/lib/mysql
+        ports:
+            - "8106:3306"
+        environment:
+            - MYSQL_ROOT_PASSWORD=root
+            - MYSQL_DATABASE=cakephp-jwt
+            - MYSQL_USER=cakephp-jwt
+            - MYSQL_PASSWORD=cakephp-jwt
+    # PhpMyAdmin for Normal DB
+    cakephp-jwt-phpmyadmin:
+        depends_on:
+            - cakephp-jwt-mysql
+            - cakephp-jwt-php-fpm
+        image: phpmyadmin/phpmyadmin
+        container_name: cakephp-jwt-phpmyadmin
+        ports:
+            - "8081:80"
+        links:
+            - cakephp-jwt-mysql
+        environment:
+            - PMA_HOST=cakephp-jwt-mysql
+            - MYSQL_ROOT_PASSWORD=root
+    cakephp-jwt-mysql-test:
+        image: mysql:5.7
+        container_name: cakephp-jwt-mysql-test
+        volumes:
+            - ./db-data/test-db:/var/lib/mysql
+        ports:
+            - "8107:3306"
+        environment:
+            - MYSQL_ROOT_PASSWORD=root
+            - MYSQL_DATABASE=cakephp-jwt
+            - MYSQL_USER=cakephp-jwt
+            - MYSQL_PASSWORD=cakephp-jwt
+    # Webserver
+    cakephp-jwt-nginx:
+        depends_on:
+            - cakephp-jwt-mysql
+            - cakephp-jwt-mysql-test
+            - cakephp-jwt-php-fpm
+        image: phpdockerio/nginx:latest
+        container_name: cakephp-jwt-nginx
+        volumes:
+            - ./../../:/var/www/html
+            - ./nginx.conf:/etc/nginx/conf.d/default.conf
+        ports:
+            - "8180:80"
+        links:
+            - cakephp-jwt-php-fpm
+    # PHP
+    cakephp-jwt-php-fpm:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: cakephp-jwt-php-fpm
+        volumes:
+            - ./../../:/var/www/html
+        links:
+            - cakephp-jwt-mailhog
+            - cakephp-jwt-mysql
+            - cakephp-jwt-mysql-test
