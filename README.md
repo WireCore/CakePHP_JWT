@@ -7,7 +7,7 @@ CakePHP_JWT is a Plugin for CakePHP 4 that allows you to authenticate users by J
 Use the package manager [composer](https://getcomposer.org) to install CakePHP_JWT.
 
 ```bash
-composer require Wirecore/CakePHP_JWT
+composer require wirecore/cakephp_jwt
 ```
 
 ## Usage
