@@ -1,0 +1,37 @@
+{
+    "name": "CakePHP_JWT",
+    "description": "CakePHP plugin for authenticating users by JSON Web Tokens",
+    "type": "cakephp-plugin",
+    "version": "0.1.0",
+	"keywords": [
+		"cakephp",
+		"authenticate",
+		"authentication",
+		"jwt"
+	],
+	"homepage": "https://github.com/WireCore/CakePHP-JWT-Plugin",
+    "authors": [
+        {
+            "name": "Florian Laabs"
+        }
+    ],
+    "license": "MIT",
+    "require": {
+		"firebase/php-jwt": "^5.2",
+        "cakephp/cakephp": "^4.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Wirecore\\CakePHP_JWT\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Wirecore\\CakePHP_JWT\\Test\\": "tests/",
+            "Cake\\Test\\": "vendor/cakephp/cakephp/tests/"
+        }
+    }
+}
