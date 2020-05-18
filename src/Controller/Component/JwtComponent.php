@@ -125,7 +125,7 @@ class JwtComponent extends Component {
        *
        * @return string
        */
-    public function getIdentity(): ?IdentityInterface {
+    public function getIdentity() {
         return $this->user;
     }
 
