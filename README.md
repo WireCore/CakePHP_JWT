@@ -29,7 +29,10 @@ $this->loadComponent("Wirecore/CakePHP_JWT.Jwt", [
     'headerParam' => 'Authorization', // default is Authorization
     'usersTable' => 'Users', // default is Users
     'unauthorizedExceptionText' => 'You are not authorized to access that location', // default is You are not authorized to access that location
-    'encryptionKey' => '' // default is used the salt of your application
+    'encryptionKey' => '', // default is used the salt of your application
+    'refreshTokenName' => 'refresh_token', // default is refresh_token
+    'refreshTokenSecure' => false, // default is false
+    'refreshTokenHttpOnly' => true // default is true
 ]);
 ```
 
