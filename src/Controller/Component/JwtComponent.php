@@ -284,31 +284,15 @@ class JwtComponent extends Component {
     }
 
     /**
-     * Refresh the access and the refresh token. Optional activate $doubleProof param to check the payload in the access token.
+     * Refresh the access and the refresh token.
      *
-     * @param boolean $doubleProof
-     * @return array
      */
-    public function refreshTokens($doubleProof = false): array {
+    public function refreshTokens(){
 
         if(isset($_COOKIE['refresh_token'])){
 
             $refreshToken = $_COOKIE['refresh_token'];
             $decodedRefreshToken = $this->decode($refreshToken);
-
-            $valid = false;
-            if($doubleProof == true){
-                
-                $accessToken = $this->getAccessToken();
-                $decodedAccessToken = $this->decode($accessToken);
-
-                if($decodedAccessToken['sub'] === $decodedRefreshToken['sub']){
-                    $valid = true;
-                }
-
-            } else {
-                $valid = true;
-            }
 
             $accessToken = $this->generateAccessToken($decodedRefreshToken['sub']);
             $this->setRefreshTokenCookie($decodedRefreshToken['sub']);

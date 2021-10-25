@@ -63,7 +63,7 @@ To set the refresh token cookie use this. The method generate a new refresh toke
 $this->Jwt->setRefreshTokenCookie($userId);
 ```
 
-To refresh access and refresh token use this method. Optional set first param to true to check the payload.
+To refresh access and refresh token use this method:
 ```php
 $this->Jwt->refreshTokens();
 ```
@@ -106,7 +106,7 @@ public function refreshToken(){
 
     // <-- checking user password here
 
-    $token = $this->Jwt->refreshTokens(true); // generate a new access token for 15 minutes and actualize the refresh token cookie
+    $token = $this->Jwt->refreshTokens(); // generate a new access token for 15 minutes and actualize the refresh token cookie
 
     $response = $response->withStatus(200);
 
