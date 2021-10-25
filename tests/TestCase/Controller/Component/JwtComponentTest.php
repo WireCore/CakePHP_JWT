@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Wirecore\CakePHP_Jwt\Test\TestCase\Controller\Component;
+namespace WireCore\CakePHP_Jwt\Test\TestCase\Controller\Component;
 
 use Cake\TestSuite\TestCase;
 use Cake\Http\Response;

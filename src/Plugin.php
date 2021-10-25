@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Wirecore\CakePHP_JWT;
+namespace WireCore\CakePHP_JWT;
 
 use Cake\Core\BasePlugin;
 use Cake\Core\PluginApplicationInterface;
