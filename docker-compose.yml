@@ -1,15 +1,9 @@
 version: '3'
 
 services:
-    # Mail
-    cakephp-jwt-mailhog:
-        image: phpdockerio/mailhog:latest
-        container_name: cakephp-jwt-mailhog
-        ports:
-            - "8125:8025"
     # DB
     cakephp-jwt-mysql:
-        image: mysql:5.7
+        image: mariadb:10.5.9
         container_name: cakephp-jwt-mysql
         volumes:
             - ./db-data/db:/var/lib/mysql
@@ -17,9 +11,9 @@ services:
             - "8106:3306"
         environment:
             - MYSQL_ROOT_PASSWORD=root
-            - MYSQL_DATABASE=cakephp-jwt
-            - MYSQL_USER=cakephp-jwt
-            - MYSQL_PASSWORD=cakephp-jwt
+            - MYSQL_DATABASE=cakephp_jwt
+            - MYSQL_USER=username
+            - MYSQL_PASSWORD=password
     # PhpMyAdmin for Normal DB
     cakephp-jwt-phpmyadmin:
         depends_on:
@@ -35,7 +29,7 @@ services:
             - PMA_HOST=cakephp-jwt-mysql
             - MYSQL_ROOT_PASSWORD=root
     cakephp-jwt-mysql-test:
-        image: mysql:5.7
+        image: mariadb:10.5.9
         container_name: cakephp-jwt-mysql-test
         volumes:
             - ./db-data/test-db:/var/lib/mysql
@@ -43,18 +37,20 @@ services:
             - "8107:3306"
         environment:
             - MYSQL_ROOT_PASSWORD=root
-            - MYSQL_DATABASE=cakephp-jwt
-            - MYSQL_USER=cakephp-jwt
-            - MYSQL_PASSWORD=cakephp-jwt
+            - MYSQL_DATABASE=cakephp_jwt
+            - MYSQL_USER=username
+            - MYSQL_PASSWORD=password
     # Webserver
     cakephp-jwt-nginx:
         depends_on:
             - cakephp-jwt-mysql
             - cakephp-jwt-mysql-test
             - cakephp-jwt-php-fpm
-        image: phpdockerio/nginx:latest
+        image: nginx:1.19.5
         container_name: cakephp-jwt-nginx
         volumes:
+            - cakephp-jwt-cakephp-installation:/var/www/html
+            - .:/var/www/html/plugins/Wirecore/CakePHP_JWT
             - ./nginx.conf:/etc/nginx/conf.d/default.conf
         ports:
             - "8080:80"
@@ -63,12 +59,15 @@ services:
     # PHP
     cakephp-jwt-php-fpm:
         build:
-            context: .
+            context: ./
             dockerfile: Dockerfile
         container_name: cakephp-jwt-php-fpm
         volumes:
-            - .:/var/www/html/plugins/CakePHP_JWT
+            - cakephp-jwt-cakephp-installation:/var/www/html
+            - .:/var/www/html/plugins/Wirecore/CakePHP_JWT
         links:
-            - cakephp-jwt-mailhog
             - cakephp-jwt-mysql
             - cakephp-jwt-mysql-test
+
+volumes:
+    cakephp-jwt-cakephp-installation:

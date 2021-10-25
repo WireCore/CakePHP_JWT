@@ -16,31 +16,57 @@ class JwtComponent extends Component {
     protected $unauthenticatedActions = [];
 
     protected $_defaultConfig = [
-        'tokenExpiration' => 86400
+        'accessTokenExpiration' => 900, // in seconds
+        'refreshTokenExpiration' => 60, // in days
+        'headerParam' => 'Authorization',
+        'usersTable' => 'Users',
+        'unauthorizedExceptionText' => 'You are not authorized to access that location',
+        'encryptionKey' => '',
+        'refreshTokenName' => 'refresh_token',
+        'refreshTokenSecure' => false,
+        'refreshTokenHttpOnly' => true
     ];
 
     public function startup(): void {
-        $this->doIdentityCheck();
+
+        // set encryption key if empty
+        if(empty($this->getConfig('encryptionKey')) == true){
+            $this->setConfig('encryptionKey', Security::getSalt());
+        }
+
+        $identity = $this->doIdentityCheck();
     }
 
     /**
        * 
        * Check the request for a authenticated method and if the method is a authenticated method it run the findIdentity method or return a unauthorized exception
     */
-    protected function doIdentityCheck(): void {
+    protected function doIdentityCheck(){
 
         $request = $this->getController()->getRequest();
         $action = $request->getParam('action');
         if (in_array($action, $this->unauthenticatedActions, true)) {
-            return;
+            return true;
         }
 
         $identity = $this->findIdentity();
+
         if(!$identity){
             throw new UnauthorizedException(
-                'You are not authorized to access that location'
+                $this->getConfig('unauthorizedExceptionText')
             );
         }
+    }
+
+    /**
+     * Return the refresh token expiration in seconds from the configured days in config
+     *
+     * @return integer
+     */
+    protected function getRefreshTokenExpirationInSeconds(): int {
+
+        return $this->getConfig('refreshTokenExpiration') * 86400;
+
     }
 
     /**
@@ -74,7 +100,7 @@ class JwtComponent extends Component {
        *
        * @return array
        */
-    public function getUnauthenticatedActions(): array{
+    public function getUnauthenticatedActions(): array {
         return $this->unauthenticatedActions;
     }
 
@@ -84,19 +110,27 @@ class JwtComponent extends Component {
        *
        * @return object
        */
-    public function findIdentity() {
+    public function findIdentity(){
 
-        $token = $this->getJwtToken();
+        $token = $this->getAccessToken();
 
         if(!empty($token)){
 
             $jwtData = $this->decode($token);
             
-            $users = TableRegistry::get('Users');
-            $user = $users->get($jwtData['sub']);
-            $this->user = $user;
+            $user = null;
+            if(TableRegistry::exists($this->getConfig('usersTable')) == true){
+                $users = TableRegistry::get($this->getConfig('usersTable'));
+                $user = $users->get($jwtData['sub']);
+                $this->user = $user;
+            }
 
             return $user;
+        
+        } else {
+
+            return null;
+        
         }
 
     }
@@ -107,13 +141,13 @@ class JwtComponent extends Component {
        *
        * @return string
        */
-    public function getJwtToken(){
+    public function getAccessToken(){
 
         $controller = $this->getController();
         
         $request = $controller->getRequest();
         
-        $jwtToken = $request->getHeaderLine('Authorization');
+        $jwtToken = $request->getHeaderLine($this->getConfig('headerParam'));
 
         return $jwtToken;
 
@@ -148,14 +182,25 @@ class JwtComponent extends Component {
        *
        * @param int $userId  the userId that are contained in the jwt token
        */
-    public function encode($userId){
+    public function encode($userId, $tokenType = 'access'){
         
         $iss = Router::url('/', true); // hostname
         $sub = $userId; // subject
         $iat = strtotime(date('Y-m-d H:i:s')); // issued at
-        $exp = $iat + $this->getConfig('tokenExpiration'); // expiration
+        $key = $this->getConfig('encryptionKey'); // key
+        
+        // expiration
+        switch($tokenType){
+            case 'access':
+                $exp = $iat + $this->getConfig('accessTokenExpiration');
+                break;
+            case 'refresh':
+                $exp = $iat + $this->getRefreshTokenExpirationInSeconds();
+                break;
+            default:
+                $exp = $iat + $this->getConfig('accessTokenExpiration');
+        }
 
-        $key = Security::getSalt(); // salt
         $payload = array(
             "iss" => $iss,
             "sub" => $sub,
@@ -171,7 +216,12 @@ class JwtComponent extends Component {
          */
         $jwt = JWT::encode($payload, $key);
 
-        return $jwt;
+        $accessToken = [
+            'jwt' => $jwt,
+            'expiration' => $exp
+        ];
+
+        return $accessToken;
 		
 	}
     
@@ -183,19 +233,92 @@ class JwtComponent extends Component {
        */
 	public function decode($jwt){
         
-        $key = Security::getSalt(); // salt
+        $key = $this->getConfig('encryptionKey');
         
         $decoded = JWT::decode($jwt, $key, array('HS256'));
-
-        /*
-        NOTE: This will now be an object instead of an associative array. To get
-        an associative array, you will need to cast it as such:
-        */
 
         $decoded_array = (array) $decoded;
 
         return $decoded_array;
 
 	}
+
+    /**
+     * Generate a new access token with the user Id
+     *
+     * @param int $userId
+     * @return array
+     */
+    public function generateAccessToken($userId): array {
+        return $this->encode($userId, 'access');
+    }
+
+    /**
+     * Generate a new refresh token with the user Id
+     *
+     * @param int $userId
+     * @return array
+     */
+    public function generateRefreshToken($userId): array {
+        return $this->encode($userId, 'refresh');
+    }
+
+    /**
+     * Generate a new Refresh token and set it to the defined named cookie
+     *
+     * @param int $userId
+     * @return bool
+     */
+    public function setRefreshTokenCookie($userId): bool {
+
+        $name = $this->getConfig('refreshTokenName');
+        $refreshToken = $this->generateRefreshToken($userId)['jwt'];
+        $expiration = strtotime(date('Y-m-d H:i:s')) + $this->getRefreshTokenExpirationInSeconds();
+        $path = '/';
+        $host = parse_url($_SERVER['HTTP_HOST'])['host'];
+        $secure = $this->getConfig('refreshTokenSecure');
+        $httpOnly = $this->getConfig('refreshTokenHttpOnly');
+
+        return setcookie($name, $refreshToken, $expiration, $path, $host, $secure, $httpOnly);
+
+    }
+
+    /**
+     * Refresh the access and the refresh token. Optional activate $doubleProof param to check the payload in the access token.
+     *
+     * @param boolean $doubleProof
+     * @return array
+     */
+    public function refreshTokens($doubleProof = false): array {
+
+        if(isset($_COOKIE['refresh_token'])){
+
+            $refreshToken = $_COOKIE['refresh_token'];
+            $decodedRefreshToken = $this->decode($refreshToken);
+
+            $valid = false;
+            if($doubleProof == true){
+                
+                $accessToken = $this->getAccessToken();
+                $decodedAccessToken = $this->decode($accessToken);
+
+                if($decodedAccessToken['sub'] === $decodedRefreshToken['sub']){
+                    $valid = true;
+                }
+
+            } else {
+                $valid = true;
+            }
+
+            $accessToken = $this->generateAccessToken($decodedRefreshToken['sub']);
+            $this->setRefreshTokenCookie($decodedRefreshToken['sub']);
+
+            return $accessToken;
+
+        } else {
+            return false;
+        }
+
+    }
 
 }

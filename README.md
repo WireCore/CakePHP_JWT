@@ -22,6 +22,17 @@ $this->loadComponent("Wirecore/CakePHP_JWT.Jwt");
 ```
 This was all what you need. All actions are now authentication protected.
 
+Optional you can set some component configuration.
+```php
+$this->loadComponent("Wirecore/CakePHP_JWT.Jwt", [
+    'tokenExpiration' => 900, // default is 900 seconds
+    'headerParam' => 'Authorization', // default is Authorization
+    'usersTable' => 'Users', // default is Users
+    'unauthorizedExceptionText' => 'You are not authorized to access that location', // default is You are not authorized to access that location
+    'encryptionKey' => '' // default is used the salt of your application
+]);
+```
+
 ### Methods
 
 To allow actions unauthenticated use this:
@@ -34,15 +45,99 @@ The Plugin matches automaticly a user by the transferd JWT Token. To get this Us
 $this->Jwt->getIdentity();
 ```
 
-To encode a user id and sent it the a user use this:
+To generate a new access token use this:
 ```php
-$this->Jwt->encode($userId);
+$this->Jwt->generateAccessToken($userId);
+```
+
+To generate a new refresh token use this:
+```php
+$this->Jwt->generateRefreshToken($userId);
+```
+
+To set the refresh token cookie use this. The method generate a new refresh token.
+```php
+$this->Jwt->setRefreshTokenCookie($userId);
+```
+
+To refresh access and refresh token use this method. Optional set first param to true to check the payload.
+```php
+$this->Jwt->refreshTokens();
+```
+
+## Best Practise
+
+Here is a example of a AuthController that you can use. You must change a bit things but the basic concept should be the same
+
+```php
+public function initialize():void{
+    parent::initialize();
+    $this->Jwt->allowUnauthenticated(['login', 'refreshToken']);
+}
+
+public function login(){
+
+    $response = $this->getResponse();
+    $data = $this->request->getData();
+
+    // <-- checking user password here
+
+    $userId = 123; // for exmaple here is userId 123
+
+    // password correct
+    $token = $this->Jwt->generateAccessToken($userId); // access token for 15 minute authentication
+    $this->Jwt->setRefreshTokenCookie($userId); // refresh token for refreshing the access token
+
+    $response = $response->withStatus(200);
+
+    $this->set('token', $token);
+    $this->viewBuilder()->setOption('serialize', 'token');
+    $this->viewBuilder()->setClassName('Json');
+    $this->setResponse($response);
+
+}
+
+public function refreshToken(){
+
+    $response = $this->getResponse();
+
+    // <-- checking user password here
+
+    $token = $this->Jwt->refreshTokens(true); // generate a new access token for 15 minutes and actualize the refresh token cookie
+
+    $response = $response->withStatus(200);
+
+    $this->set('token', $token);
+    $this->viewBuilder()->setOption('serialize', 'token');
+    $this->viewBuilder()->setClassName('Json');
+    $this->setResponse($response);
+
+}
 ```
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 Please make sure to update tests as appropriate.
+
+## Development Setup
+
+In the root folder you find a docker-compose file what you can use to develop the plugin. Follow the introduction at the installation section, and change the following lines in the composer.json of the cakephp installation.
+```php
+"autoload": {
+    "psr-4": {
+        "App\\": "src/",
+        "Wirecore\\CakePHP_JWT\\": "plugins/Wirecore/CakePHP_JWT/src/",
+        "Wirecore\\CakePHP_JWT\\Test\\": "plugins/Wirecore/CakePHP_JWT/tests/"
+    }
+},
+```
+After adding the previous lines you need to run in the php-fpm container.
+```php
+composer dumpautoload
+```
+
+In addition you find a .devcontainer folder in the project that is recommended for development in VS Code.
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
