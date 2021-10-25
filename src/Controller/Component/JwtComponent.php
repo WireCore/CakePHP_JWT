@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Wirecore\CakePHP_JWT\Controller\Component;
+namespace WireCore\CakePHP_JWT\Controller\Component;
 
 use Cake\Controller\Component;
 use Cake\Http\Exception\UnauthorizedException;
