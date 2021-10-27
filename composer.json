@@ -2,7 +2,7 @@
     "name": "wirecore/cakephp_jwt",
     "description": "CakePHP plugin for authenticating users by JSON Web Tokens",
     "type": "cakephp-plugin",
-    "version": "0.2.1",
+    "version": "0.2.2",
 	"keywords": [
 		"cakephp",
 		"authenticate",
