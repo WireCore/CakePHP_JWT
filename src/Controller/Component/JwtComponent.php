@@ -110,7 +110,7 @@ class JwtComponent extends Component {
        *
        * @return object
        */
-    public function findIdentity(){
+      public function findIdentity(){
 
         $token = $this->getAccessToken();
 
@@ -118,11 +118,12 @@ class JwtComponent extends Component {
 
             $jwtData = $this->decode($token);
             
-            $user = null;
-            if(TableRegistry::exists($this->getConfig('usersTable')) == true){
-                $users = TableRegistry::get($this->getConfig('usersTable'));
-                $user = $users->get($jwtData['sub']);
+            $user = TableRegistry::get($this->getConfig('usersTable'))->find('all')->where(['id' => $jwtData['sub']])->toArray();
+            if(!empty($user)){
+                $user = $user[0];
                 $this->user = $user;
+            } else {
+                $user = null;
             }
 
             return $user;
