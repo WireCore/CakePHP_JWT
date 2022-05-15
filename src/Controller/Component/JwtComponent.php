@@ -276,7 +276,12 @@ class JwtComponent extends Component {
         $refreshToken = $this->generateRefreshToken($userId)['jwt'];
         $expiration = strtotime(date('Y-m-d H:i:s')) + $this->getRefreshTokenExpirationInSeconds();
         $path = '/';
-        $host = parse_url($_SERVER['HTTP_HOST'])['host'];
+        $currentUrl = parse_url($_SERVER['HTTP_HOST']);
+        if(isset($currentUrl['path'])){
+            $host = $currentUrl['path'];
+        } else {
+            $host = $currentUrl['host'].':'.$currentUrl['port'];
+        }
         $secure = $this->getConfig('refreshTokenSecure');
         $httpOnly = $this->getConfig('refreshTokenHttpOnly');
 
