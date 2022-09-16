@@ -32,7 +32,8 @@ $this->loadComponent("Wirecore/CakePHP_JWT.Jwt", [
     'encryptionKey' => '', // default is used the salt of your application
     'refreshTokenName' => 'refresh_token', // default is refresh_token
     'refreshTokenSecure' => false, // default is false
-    'refreshTokenHttpOnly' => true // default is true
+    'refreshTokenHttpOnly' => true, // default is true
+    'hostAddPort' => false // if by generation the refresh token server path is not available, it used the host server variable. by enabling this option it add the current available port to the host 
 ]);
 ```
 

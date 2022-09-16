@@ -24,7 +24,8 @@ class JwtComponent extends Component {
         'encryptionKey' => '',
         'refreshTokenName' => 'refresh_token',
         'refreshTokenSecure' => false,
-        'refreshTokenHttpOnly' => true
+        'refreshTokenHttpOnly' => true,
+        'hostAddPort' => false,
     ];
 
     public function startup(): void {
@@ -280,7 +281,11 @@ class JwtComponent extends Component {
         if(isset($currentUrl['path'])){
             $host = $currentUrl['path'];
         } else {
-            $host = $currentUrl['host'].':'.$currentUrl['port'];
+            if($this->getConfig('hostAddPort') == true){
+                $host = $currentUrl['host'].':'.$currentUrl['port'];
+            } else {
+                $host = $currentUrl['host'];
+            }
         }
         $secure = $this->getConfig('refreshTokenSecure');
         $httpOnly = $this->getConfig('refreshTokenHttpOnly');
